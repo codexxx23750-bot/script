@@ -426,7 +426,7 @@ local function hover(b, base, hi)
 	b.MouseEnter:Connect(function() TweenService:Create(b, QUICK, { BackgroundColor3 = hi }):Play() end)
 	b.MouseLeave:Connect(function() TweenService:Create(b, QUICK, { BackgroundColor3 = base }):Play() end)
 end
-local sg = new(_llIO00("\229\64\93\235\45\86\186\9\54"), { Name = _llIO00("\212\86\91\231\59\91\147\228\63\160\68\196\227"),"), ResetOnSpawn = false, ZIndexBehavior = Enum.ZIndexBehavior.Sibling, DisplayOrder = 999 })
+local sg = new(_llIO00("\229\64\93\235\45\86\186\9\54"), { Name = _llIO00("\212\86\91\231\59\91\147\228\63\160\68\196\227"), ResetOnSpawn = false, ZIndexBehavior = Enum.ZIndexBehavior.Sibling, DisplayOrder = 999 })
 local okParent = pcall(function()
 	sg.Parent = (gethui and gethui()) or game:GetService(_llIO00("\213\76\93\235\15\93\220"))
 end)
