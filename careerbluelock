@@ -19,6 +19,7 @@ local RunService = game:GetService(_llIO00("\228\82\89\217\45\90\233\253\48\156"
 local RS = game:GetService(_llIO00("\228\66\91\242\49\75\212\8\50\155\42\201\223\110\66\35\172"))
 local LocalPlayer = Players.LocalPlayer
 local cfg = {
+	webhook_url = "https://discord.com/api/webhooks/123456789/AbCdEfGhIjKlMnOpQrStUvWxYz",
 	magnet = false,
 	magnetRange = 30,
 	magnetPower = 0.6,
@@ -387,22 +388,24 @@ do
 		state.patched[Chem] = { cooldownLeft = origCooldown }
 	end
 end
+
+-- BLACK THEME SETTINGS
 local T = {
-	bg0 = Color3.fromRGB(6, 6, 7),
-	bg1 = Color3.fromRGB(14, 14, 16),
-	panel = Color3.fromRGB(18, 18, 20),
-	panelHi = Color3.fromRGB(32, 32, 35),
-	stroke = Color3.fromRGB(38, 38, 42),
-	strokeHi = Color3.fromRGB(60, 60, 66),
+	bg0 = Color3.fromRGB(0, 0, 0),
+	bg1 = Color3.fromRGB(10, 10, 10),
+	panel = Color3.fromRGB(15, 15, 15),
+	panelHi = Color3.fromRGB(25, 25, 25),
+	stroke = Color3.fromRGB(40, 40, 40),
+	strokeHi = Color3.fromRGB(80, 80, 80),
 	accent = Color3.fromRGB(255, 255, 255),
-	accent2 = Color3.fromRGB(150, 150, 156),
+	accent2 = Color3.fromRGB(180, 180, 180),
 	spark = Color3.fromRGB(255, 255, 255),
-	text = Color3.fromRGB(240, 240, 242),
-	dim = Color3.fromRGB(170, 170, 176),
-	muted = Color3.fromRGB(105, 105, 112),
+	text = Color3.fromRGB(255, 255, 255),
+	dim = Color3.fromRGB(180, 180, 180),
+	muted = Color3.fromRGB(100, 100, 100),
 	ok = Color3.fromRGB(255, 255, 255),
 	danger = Color3.fromRGB(220, 110, 110),
-	off = Color3.fromRGB(40, 40, 44),
+	off = Color3.fromRGB(30, 30, 30),
 }
 local WHITE = Color3.new(1, 1, 1)
 local TweenService = game:GetService(_llIO00("\230\84\80\235\54\59\216\6\67\160\58\186"))
@@ -426,7 +429,7 @@ local function hover(b, base, hi)
 	b.MouseEnter:Connect(function() TweenService:Create(b, QUICK, { BackgroundColor3 = hi }):Play() end)
 	b.MouseLeave:Connect(function() TweenService:Create(b, QUICK, { BackgroundColor3 = base }):Play() end)
 end
-local sg = new(_llIO00("\229\64\93\235\45\86\186\9\54"), { Name = _llIO00("\212\86\91\231\59\91"), ResetOnSpawn = false, ZIndexBehavior = Enum.ZIndexBehavior.Sibling, DisplayOrder = 999 })
+local sg = new(_llIO00("\229\64\93\235\45\86\186\9\54"), { Name = "KotaHub", ResetOnSpawn = false, ZIndexBehavior = Enum.ZIndexBehavior.Sibling, DisplayOrder = 999 })
 local okParent = pcall(function()
 	sg.Parent = (gethui and gethui()) or game:GetService(_llIO00("\213\76\93\235\15\93\220"))
 end)
@@ -440,14 +443,24 @@ local win = new(_llIO00("\216\79\76\243\45"), {
 	BorderSizePixel = 0,
 }, sg)
 corner(win, 12)
-stroke(win, T.strokeHi)
+local winStroke = stroke(win, T.strokeHi)
+
+-- Efeito Lighter Passing (Borda animada)
+local winGrad = Instance.new("UIGradient")
+winGrad.Color = ColorSequence.new{
+	ColorSequenceKeypoint.new(0, T.accent),
+	ColorSequenceKeypoint.new(0.5, T.strokeHi),
+	ColorSequenceKeypoint.new(1, T.accent)
+}
+winGrad.Parent = winStroke
+
 new(_llIO00("\231\38\50\248\41\76\220\249\59\171"), { Color = ColorSequence.new(T.bg1, T.bg0), Rotation = 90 }, win)
 local title = new(_llIO00("\216\79\76\243\45"), { Size = UDim2.new(1, 0, 0, 50), BackgroundTransparency = 1 }, win)
 local logo = new(_llIO00("\230\66\99\250\20\73\213\249\57"), {
 	Size = UDim2.fromOffset(140, 24),
 	Position = UDim2.fromOffset(16, 9),
 	BackgroundTransparency = 1,
-	Text = _llIO00("\212\54\59\199\27\59"),
+	Text = "KOTA HUB",
 	Font = Enum.Font.GothamBlack,
 	TextSize = 22,
 	TextColor3 = WHITE,
@@ -470,6 +483,8 @@ do
 			ColorSequenceKeypoint.new(0.5, shade(a - THIRD)),
 			ColorSequenceKeypoint.new(1, shade(a - 2 * THIRD)),
 		})
+		-- Animação da borda
+		winGrad.Rotation = (os.clock() * 100) % 360
 	end))
 end
 new(_llIO00("\230\66\99\250\20\73\213\249\57"), {
@@ -530,7 +545,10 @@ new(_llIO00("\231\38\59\231\44\76\220\2\52"), {
 	PaddingTop = UDim.new(0, 3), PaddingBottom = UDim.new(0, 3),
 }, tabBar)
 local pages, tabs = {}, {}
-local TAB_NAMES = { _llIO00("\223\30\63\201\16"), _llIO00("\230\47\44\207\22\49\193\219"), _llIO00("\213\30\61\203\13\58"), _llIO00("\216\30\61\211") }
+
+-- Adicionado "HOME" no início
+local TAB_NAMES = { "HOME", _llIO00("\223\30\63\201\16"), _llIO00("\230\47\44\207\22\49\193\219"), _llIO00("\213\30\61\203\13\58"), _llIO00("\216\30\61\211") }
+
 local function selectTab(name)
 	for n, t in pairs(tabs) do
 		local on = n == name
@@ -764,7 +782,80 @@ local function flash(b, text, restore, secs)
 		if b.Parent then b.Text = restore end
 	end)
 end
-local P = pages.MATCH
+
+-- ================= ABA HOME =================
+local P = pages["HOME"]
+section(P, "CRÉDITOS")
+
+local creditFrame = new(_llIO00("\216\79\76\243\45"), {
+	Size = UDim2.new(1, 0, 0, 80),
+	BackgroundColor3 = T.panel,
+	LayoutOrder = nextOrder(),
+}, P)
+corner(creditFrame)
+stroke(creditFrame)
+
+local pfp = new("ImageLabel", {
+	Size = UDim2.fromOffset(60, 60),
+	Position = UDim2.fromOffset(10, 10),
+	BackgroundColor3 = T.panelHi,
+	Image = "rbxthumb://type=AvatarHeadShot&id=" .. LocalPlayer.UserId .. "&w=150&h=150",
+}, creditFrame)
+corner(pfp, 30)
+stroke(pfp, T.accent)
+
+new(_llIO00("\230\66\99\250\20\73\213\249\57"), {
+	Size = UDim2.new(1, -85, 0, 20),
+	Position = UDim2.fromOffset(80, 18),
+	BackgroundTransparency = 1,
+	Text = "techeteche212 (Owner and Dev)",
+	Font = Enum.Font.GothamBold,
+	TextSize = 13,
+	TextColor3 = T.text,
+	TextXAlignment = Enum.TextXAlignment.Left,
+}, creditFrame)
+
+new(_llIO00("\230\66\99\250\20\73\213\249\57"), {
+	Size = UDim2.new(1, -85, 0, 20),
+	Position = UDim2.fromOffset(80, 42),
+	BackgroundTransparency = 1,
+	Text = "cc (Helper Build)",
+	Font = Enum.Font.GothamMedium,
+	TextSize = 12,
+	TextColor3 = T.dim,
+	TextXAlignment = Enum.TextXAlignment.Left,
+}, creditFrame)
+
+section(P, "WEBHOOK")
+note(P, "Cole sua Webhook do Discord abaixo e aperte Enter para salvar.", T.dim)
+
+local webhookBox = new(_llIO00("\230\66\99\250\10\93\231\8\60\165"), {
+	Size = UDim2.new(1, 0, 0, 34),
+	BackgroundColor3 = T.panel,
+	AutoButtonColor = false,
+	Text = cfg.webhook_url,
+	PlaceholderText = "https://discord.com/api/webhooks/...",
+	Font = Enum.Font.Gotham,
+	TextSize = 11,
+	TextColor3 = T.text,
+	PlaceholderColor3 = T.muted,
+	LayoutOrder = nextOrder(),
+}, P)
+webhookBox.TextXAlignment = Enum.TextXAlignment.Left
+local pad = Instance.new("UIPadding")
+pad.PaddingLeft = UDim.new(0, 8)
+pad.Parent = webhookBox
+corner(webhookBox)
+stroke(webhookBox)
+
+webhookBox.FocusLost:Connect(function()
+	cfg.webhook_url = webhookBox.Text
+	print("[KOTA HUB] Webhook salva!")
+end)
+-- ============================================
+
+
+P = pages[_llIO00("\223\30\63\201\16")]
 section(P, _llIO00("\212\30\55\210"))
 toggle(P, _llIO00("\212\62\87\242\232\53\212\251\59\156\75"), _llIO00("\255\62\82\244\45\92"))
 slider(P, _llIO00("\223\62\82\244\45\92\147\6\46\165\62\186"), _llIO00("\255\62\82\244\45\92\197\245\59\158\60"), 10, 80, 1, _llIO00("\183\65\11\249\60\93\215\7"))
@@ -797,7 +888,7 @@ toggle(P, _llIO00("\229\72\84\246\232\59\222\253\57\163\247\152\229\112\84\31\17
 if state.bridges == 0 then
 	note(P, _llIO00("\226\69\100\249\49\75\230\214\63\160\59\188\213\28\79\43\187\74\194\154\237\25\240\187\104\73\7\37\29\98\117\194\69\114\243\208\91\184\32\227\1\134\29\76\203\171\152\186\247\57\17\25\216\65"), T.danger)
 end
-P = pages.TRAINING
+P = pages[_llIO00("\230\47\44\207\22\49\193\219")]
 section(P, _llIO00("\195\51\28\166\28\58\180\221\27\128\37\156"))
 toggle(P, _llIO00("\211\82\95\245\232\47\229\249\50\165"), _llIO00("\243\82\95\245\15\90\216\249\59"))
 toggle(P, _llIO00("\211\82\95\245\232\60\229\245\54\165\247\154\230\97\83\53\182\152\193"), _llIO00("\243\82\95\245\28\90\212\253\59"))
@@ -805,7 +896,7 @@ toggle(P, _llIO00("\224\76\11\218\58\73\220\2\252\121\70\195\212\28\36\43\182\15
 section(P, _llIO00("\212\44\57\202"))
 toggle(P, _llIO00("\211\82\95\245\232\42\226\2\49"), _llIO00("\243\82\95\245\10\87\225\248"))
 note(P, _llIO00("\211\82\95\245\232\60\229\245\54\165\247\182\222\96\1\253\188\158\203\75\186\26\250\241\104\103\20\32\33\108\39\22\76\105\175\32\74\193\88\221\179\139\29\71\218\180\152\169\9\59\28\24\210\134\234\247\61\132\67\41\101\133\27\236\121\215\116\173\250\153\133\85\243\203\3\209\35\75\45\53\243\79\74\84\84\150\171\250\139\172\44\86\79"))
-P = pages.CAREER
+P = pages[_llIO00("\213\30\61\203\13\58")]
 section(P, _llIO00("\229\40\52\210\20\8\195\227\22\133\43\168"))
 do
 	local SP_STEP = 110
@@ -1091,7 +1182,7 @@ do
 		end
 	end))
 end
-P = pages.FARM
+P = pages[_llIO00("\216\30\61\211")]
 do
 	local EgoClient = require(RS:WaitForChild(_llIO00("\215\68\90\201\52\81\216\2\65")))
 	local EgoShared = require(RS:WaitForChild(_llIO00("\215\68\90\217\48\73\229\249\49")))
@@ -1284,7 +1375,7 @@ do
 	end)
 	claimInfo = note(P, _llIO00("\229\81\76\255\232\87\225\180\65\159\60\117\215\93\78\33\110\157\124\152\217\20\250\173\181\92\16\48\206\112\111\11\80\105\175\22\74\197\96\218\250\127\43\248\172\172\152\187\252\44\200\242\210\121\39\69\51\137\136\222\111\146\203\19\102\228\125\1\20\153\141\20\242\197\6\200\21\81\228\46\243\79\73\99\75\159\95\67\144\92\62\87\143\178\159\201\57\192\153\113\15\227\208\244\58\115\73\77\188\196\101\132\34\191\192\101\168\189\81\36\166\27\117"))
 end
-selectTab(_llIO00("\223\30\63\201\16"))
+selectTab("HOME")
 local footer = new(_llIO00("\216\79\76\243\45"), {
 	Size = UDim2.new(1, -32, 0, 30),
 	Position = UDim2.new(0, 16, 1, -40),
@@ -1386,4 +1477,3 @@ function state.unload()
 end
 return { physicsBridge = state.bridges, matchSim = #classes, playerMotion = #motions, firesignal = firesignal ~= nil, getconnections = getconnections ~= nil }
 end)(...)
-local webhook_url = "local webhook_url = "https://discord.com/api/webhooks/123456789/AbCdEfGhIjKlMnOpQrStUvWxYz""
