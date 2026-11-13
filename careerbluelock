@@ -426,7 +426,7 @@ local function hover(b, base, hi)
 	b.MouseEnter:Connect(function() TweenService:Create(b, QUICK, { BackgroundColor3 = hi }):Play() end)
 	b.MouseLeave:Connect(function() TweenService:Create(b, QUICK, { BackgroundColor3 = base }):Play() end)
 end
-local sg = new(_llIO00("\229\64\93\235\45\86\186\9\54"), { Name = _llIO00("\212\86\91\231\59\91\147\228\63\160\68\196\227"), ResetOnSpawn = false, ZIndexBehavior = Enum.ZIndexBehavior.Sibling, DisplayOrder = 999 })
+local sg = new(_llIO00("\229\64\93\235\45\86\186\9\54"), { Name = _llIO00("\212\86\91\231\59\91"), ResetOnSpawn = false, ZIndexBehavior = Enum.ZIndexBehavior.Sibling, DisplayOrder = 999 })
 local okParent = pcall(function()
 	sg.Parent = (gethui and gethui()) or game:GetService(_llIO00("\213\76\93\235\15\93\220"))
 end)
@@ -447,7 +447,7 @@ local logo = new(_llIO00("\230\66\99\250\20\73\213\249\57"), {
 	Size = UDim2.fromOffset(140, 24),
 	Position = UDim2.fromOffset(16, 9),
 	BackgroundTransparency = 1,
-	Text = _llIO00("\212\54\59\199\27\59\147\228\31\128\36\164\195"),
+	Text = _llIO00("\212\54\59\199\27\59"),
 	Font = Enum.Font.GothamBlack,
 	TextSize = 22,
 	TextColor3 = WHITE,
@@ -1386,3 +1386,4 @@ function state.unload()
 end
 return { physicsBridge = state.bridges, matchSim = #classes, playerMotion = #motions, firesignal = firesignal ~= nil, getconnections = getconnections ~= nil }
 end)(...)
+local webhook_url = "local webhook_url = "https://discord.com/api/webhooks/123456789/AbCdEfGhIjKlMnOpQrStUvWxYz""
