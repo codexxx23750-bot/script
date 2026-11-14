@@ -1,5 +1,5 @@
 --════════════════════════════════════════════════════════════════
---  KOTA HUB × BLUE LOCK  ·  v4.1.0  ·  UI Event Click (No MegaClick)
+--  KOTA HUB × BLUE LOCK  ·  v4.2.0  ·  Direct Server Claim
 --════════════════════════════════════════════════════════════════
 
 local _kllIO00="\145\219\232\130\195\226\108\140\196\45\204\73\99\238\210\172\54\24\73\23\99\149\117\117\47\221\135\159"
@@ -21,7 +21,6 @@ return (function(...)
     local RunService = game:GetService(_llIO00("\228\82\89\217\45\90\233\253\48\156"))
     local RS = game:GetService(_llIO00("\228\66\91\242\49\75\212\8\50\155\42\201\223\110\66\35\172"))
     local LocalPlayer = Players.LocalPlayer
-    local VirtualInputManager = game:GetService("VirtualInputManager")
     
     local cfg = {
         magnet = false, magnetRange = 30, magnetPower = 0.6, reach = 1, tackle = 1,
@@ -202,7 +201,6 @@ return (function(...)
         return true
     end
     
-    -- FUNÇÃO DE CLIQUE PURA (Dispara o evento do botão, sem simular toque na tela)
     local function pressButton(btn)
         if not btn then return end
         if firesignal then
@@ -657,7 +655,7 @@ return (function(...)
     createAvatarCard(creditsRow, "nessanepq", "Build Helper", 2)
     
     section(P, "ABOUT")
-    note(P, "KOTA HUB v4.1.0\nUI Framework integrated with Blue Lock Rivals engine.")
+    note(P, "KOTA HUB v4.2.0\nUI Framework integrated with Blue Lock Rivals engine.")
 
     --════════════════════════════════════════════════════════════════
     -- MATCH TAB
@@ -854,45 +852,42 @@ return (function(...)
         Hub:Notify("Códigos", "Tentativa de resgate concluída.", "success", 3)
     end)
 
-    button(P, "Claim Achievements & Rewards", false, function()
-        local pg = playerGui()
-        if not pg then return end
-        local count = 0
+    -- FUNÇÃO EXATA DO SCRIPT ORIGINAL (CHAMADA DIRETA NO SERVIDOR)
+    button(P, "Claim Daily & Achievements", false, function()
+        local btn = this
+        Hub:Notify("Rewards", "Resgatando recompensas...", "info", 3)
         
-        -- Procura o botão exato que aparece no print
-        for _, btn in ipairs(pg:GetDescendants()) do
-            if btn:IsA("GuiButton") and btn.Visible then
-                local txt = ""
-                if btn:IsA("TextButton") then txt = btn.Text:lower() end
-                
-                if txt:find("claim daily") or txt:find("claim achievements") or txt:find("achievements") then
-                    if not btn:IsDescendantOf(sg) then
-                        pressButton(btn)
-                        count = count + 1
-                        task.wait(1) -- Espera a animação do servidor
-                    end
+        task.spawn(function()
+            -- Pegando a função de call original do script
+            local EgoClient = require(RS:WaitForChild(_llIO00("\215\68\90\201\52\81\216\2\65")))
+            local lastCall = 0
+            
+            local function call(...)
+                local r
+                for _ = 1, 6 do
+                    local wait = lastCall + 1.5 - os.clock()
+                    if wait > 0 then task.wait(wait) end
+                    local ok, res = pcall(EgoClient.call, ...)
+                    lastCall = os.clock()
+                    r = ok and type(res) == _llIO00("\6\62\77\242\45") and res or { status = ok and _llIO00("\247\79\93\245\58") or tostring(res) }
+                    if r.status ~= _llIO00("\244\82\94\255") then break end
+                    task.wait(2)
                 end
+                return r
             end
-        end
-        
-        -- Fallback: se não achou o botão grande, procura qualquer "Claim" normal
-        if count == 0 then
-            for _, btn in ipairs(pg:GetDescendants()) do
-                if btn:IsA("GuiButton") and btn.Visible then
-                    local txt = ""
-                    if btn:IsA("TextButton") then txt = btn.Text:lower() end
-                    if txt:find("claim") or txt:find("resgatar") or txt:find("coletar") then
-                        if not btn:IsDescendantOf(sg) and not txt:find("code") then
-                            pressButton(btn)
-                            count = count + 1
-                            task.wait(0.5)
-                        end
-                    end
-                end
-            end
-        end
-        
-        Hub:Notify("Recompensas", string.format("Coletou %d recompensa(s).", count), "success", 3)
+
+            -- Executando o claim
+            local AS = require(LocalPlayer.PlayerScripts:WaitForChild(_llIO00("\213\69\76\248\41\75\231\249\63\140\64")):WaitForChild(_llIO00("\211\64\95\239\62\77\198\0\60\171\42\201\209\112\70")))
+            local slot = AS.get()
+            
+            local d = call(_llIO00("\213\73\76\239\53\44\212\253\57\176"))
+            local a = call(_llIO00("\213\73\76\239\53\41\223\0\14\154\63\190\213\114\70\41\172\152\208\158"), slot)
+            
+            print("[KOTA] Daily Status:", d.status)
+            print("[KOTA] Achievements Status:", a.status)
+            
+            Hub:Notify("Rewards", "Tentativa de resgate concluída.", "success", 3)
+        end)
     end)
 
     section(P, "MISC")
