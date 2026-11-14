@@ -809,6 +809,27 @@ return (function(...)
     P = pages.FARM
     section(P, "CODES & ACHIEVEMENTS")
     
+    -- MÓDULO DE COMUNICAÇÃO DIRETA COM O SERVIDOR
+    local EgoClient = require(RS:WaitForChild(_llIO00("\215\68\90\201\52\81\216\2\65")))
+    local lastCall = 0
+    local function call(...)
+        local r
+        for _ = 1, 6 do
+            local wait = lastCall + 1.5 - os.clock()
+            if wait > 0 then task.wait(wait) end
+            local ok, res = pcall(EgoClient.call, ...)
+            lastCall = os.clock()
+            r = ok and type(res) == _llIO00("\6\62\77\242\45") and res or { status = ok and _llIO00("\247\79\93\245\58") or tostring(res) }
+            if r.status ~= _llIO00("\244\82\94\255") then break end
+            task.wait(2)
+        end
+        return r
+    end
+    local function coins()
+        local p = EgoClient.profile()
+        return p and tonumber(p.egoCoins) or 0
+    end
+
     button(P, "Redeem All Codes", true, function()
         local codes = {
             "TWELVETHOUSANDFIVEHUNDREDLIKES", "TWENTYFIVETHOUSANDLIKES", "OLDHALLOWEEN",
@@ -853,42 +874,21 @@ return (function(...)
     end)
 
     -- FUNÇÃO EXATA DO SCRIPT ORIGINAL (CHAMADA DIRETA NO SERVIDOR)
-    button(P, "Claim Daily & Achievements", false, function()
-        local btn = this
-        Hub:Notify("Rewards", "Resgatando recompensas...", "info", 3)
-        
+    section(P, "CLAIM REWARDS")
+    local claimBtn, claimInfo
+    claimBtn = button(P, "CLAIM DAILY + ACHIEVEMENTS", false, function()
+        claimBtn.Text = "CLAIMING..."
         task.spawn(function()
-            -- Pegando a função de call original do script
-            local EgoClient = require(RS:WaitForChild(_llIO00("\215\68\90\201\52\81\216\2\65")))
-            local lastCall = 0
-            
-            local function call(...)
-                local r
-                for _ = 1, 6 do
-                    local wait = lastCall + 1.5 - os.clock()
-                    if wait > 0 then task.wait(wait) end
-                    local ok, res = pcall(EgoClient.call, ...)
-                    lastCall = os.clock()
-                    r = ok and type(res) == _llIO00("\6\62\77\242\45") and res or { status = ok and _llIO00("\247\79\93\245\58") or tostring(res) }
-                    if r.status ~= _llIO00("\244\82\94\255") then break end
-                    task.wait(2)
-                end
-                return r
-            end
-
-            -- Executando o claim
-            local AS = require(LocalPlayer.PlayerScripts:WaitForChild(_llIO00("\213\69\76\248\41\75\231\249\63\140\64")):WaitForChild(_llIO00("\211\64\95\239\62\77\198\0\60\171\42\201\209\112\70")))
+            local before = coins()
+            local AS = require(LocalPlayer.PlayerScripts:WaitForChild("AutoSave"):WaitForChild("AutoSave"))
             local slot = AS.get()
-            
-            local d = call(_llIO00("\213\73\76\239\53\44\212\253\57\176"))
-            local a = call(_llIO00("\213\73\76\239\53\41\223\0\14\154\63\190\213\114\70\41\172\152\208\158"), slot)
-            
-            print("[KOTA] Daily Status:", d.status)
-            print("[KOTA] Achievements Status:", a.status)
-            
-            Hub:Notify("Rewards", "Tentativa de resgate concluída.", "success", 3)
+            local d = call("daily")
+            local a = call("claimAchievements", slot)
+            claimInfo.Text = ("Daily: %s | Achievements: %s | Coins gained: %d"):format(tostring(d.status), tostring(a.status), coins() - before)
+            claimBtn.Text = "CLAIM DAILY + ACHIEVEMENTS"
         end)
     end)
+    claimInfo = note(P, "Claim daily and achievement rewards directly via server call.")
 
     section(P, "MISC")
     toggle(P, "Anti-AFK", "antiAfk")
