@@ -1,25 +1,15 @@
 --════════════════════════════════════════════════════════════════
---  KOTA HUB × BLUE LOCK  ·  v4.2.0  ·  Direct Server Claim
+--  KOTA HUB × BLUE LOCK  ·  v5.0.0  ·  Complete & Fixed
 --════════════════════════════════════════════════════════════════
 
-local _kllIO00="\145\219\232\130\195\226\108\140\196\45\204\73\99\238\210\172\54\24\73\23\99\149\117\117\47\221\135\159"
-local _cllIO00={}
-local function _llIO00(e)
-    local m=_cllIO00[e] if m then return m end
-    local K=_kllIO00 local n=#K local t=table.create(#e)
-    for i=1,#e do
-        local k=string.byte(K,(i-1)%n+1)
-        t[i]=string.char((string.byte(e,i)-k-i)%256)
-    end
-    local r=table.concat(t) _cllIO00[e]=r return r
-end
-
 return (function(...)
-    if _G.BLBall and _G.BLBall.unload then pcall(_G.BLBall.unload) end
-    local Players = game:GetService(_llIO00("\226\73\76\255\45\90\230"))
-    local UIS = game:GetService(_llIO00("\231\80\80\248\17\86\227\9\65\138\60\199\230\101\68\33"))
-    local RunService = game:GetService(_llIO00("\228\82\89\217\45\90\233\253\48\156"))
-    local RS = game:GetService(_llIO00("\228\66\91\242\49\75\212\8\50\155\42\201\223\110\66\35\172"))
+    if _G.BLBall and _G.BLBall.unload then
+        pcall(_G.BLBall.unload)
+    end
+    local Players = game:GetService("Players")
+    local UIS = game:GetService("UserInputService")
+    local RunService = game:GetService("RunService")
+    local RS = game:GetService("ReplicatedStorage")
     local LocalPlayer = Players.LocalPlayer
     
     local cfg = {
@@ -28,15 +18,20 @@ return (function(...)
         autoGreen = false, autoTrain = false, autoBond = false, noCooldown = false,
         instaGoal = false, autoHundred = false, hundredTime = 20.2, rigFlow = false,
         antiAfk = true, skipRoll = true, autoSkip = false, skipGoalAnim = false, skipCutscenes = false,
-        
-        keyTake = Enum.KeyCode.G,
-        keyScore = Enum.KeyCode.H,
-        keyToggleUI = Enum.KeyCode.RightShift
     }
-    local state = { alive = true, sim = nil, myBody = nil, lastStep = 0, conns = {}, patched = {}, staminas = setmetatable({}, { __mode = _llIO00("\253") }) }
+    local state = { alive = true, sim = nil, myBody = nil, lastStep = 0, conns = {}, patched = {}, staminas = setmetatable({}, { __mode = "k" }) }
     _G.BLBall = state
-    local function track(c) state.conns[#state.conns + 1] = c return c end
-    local function controlledOf(sim) for _, p in ipairs(sim.players or {}) do if p.controlled then return p end end end
+    local function track(c)
+        state.conns[#state.conns + 1] = c
+        return c
+    end
+    local function controlledOf(sim)
+        for _, p in ipairs(sim.players or {}) do
+            if p.controlled then
+                return p
+            end
+        end
+    end
     
     function state.putInGoal(sim, p)
         local goal = sim:goalOf(p.side)
@@ -52,34 +47,46 @@ return (function(...)
     local classes, motions, seen = {}, {}, {}
     local function hasFns(t, a, b, c)
         local ok, yes = pcall(function()
-            return type(rawget(t, a)) == _llIO00("\248\82\89\233\60\81\226\2") and type(rawget(t, b)) == _llIO00("\248\82\89\233\60\81\226\2") and type(rawget(t, c)) == _llIO00("\248\82\89\233\60\81\226\2")
+            return type(rawget(t, a)) == "function" and type(rawget(t, b)) == "function" and type(rawget(t, c)) == "function"
         end)
         return ok and yes
     end
     local function addClass(t)
-        if type(t) ~= _llIO00("\6\62\77\242\45") or seen[t] then return end
-        if hasFns(t, _llIO00("\245\76\89\250\45\91\231"), _llIO00("\245\76\89\250\58\87\223\230\46\155\64\202\227"), _llIO00("\6\62\86\235\24\87\230\7\50\170\74\190\223\106")) then
-            seen[t] = true classes[#classes + 1] = t
-        elseif hasFns(t, _llIO00("\245\79\80\231\60\77\181\3\49\176"), _llIO00("\5\81\80\246"), _llIO00("\5\81\93\239\51\77")) then
-            seen[t] = true motions[#motions + 1] = t
+        if type(t) ~= "table" or seen[t] then return end
+        if hasFns(t, "controlRadius", "interceptRadius", "tackleRadius") then
+            seen[t] = true
+            classes[#classes + 1] = t
+        elseif hasFns(t, "step", "getSpeed", "getAcceleration") then
+            seen[t] = true
+            motions[#motions + 1] = t
         end
     end
     do
-        local engine = RS:WaitForChild(_llIO00("\223\62\95\233\48\45\225\251\54\165\60"))
-        for _, name in ipairs({ _llIO00("\223\62\95\233\48\59\220\1"), _llIO00("\226\73\76\255\45\90\192\3\65\160\70\195") }) do
-            local ok, mod = pcall(function() return require(engine:WaitForChild(name)) end)
+        local engine = RS:WaitForChild("Engine")
+        for _, name in ipairs({ "MatchSim", "PlayerMotion" }) do
+            local ok, mod = pcall(function()
+                return require(engine:WaitForChild(name))
+            end)
             if ok then addClass(mod) end
         end
-        if getgc then for _, v in ipairs(getgc(true)) do addClass(v) end end
+        if getgc then
+            for _, v in ipairs(getgc(true)) do
+                addClass(v)
+            end
+        end
     end
     local function patchMotion(cls)
-        local orig = { step = rawget(cls, _llIO00("\5\81\80\246")) }
+        local orig = { step = rawget(cls, "step") }
         state.patched[cls] = orig
         cls.step = function(self, body, ...)
-            if body ~= state.myBody then return orig.step(self, body, ...) end
+            if body ~= state.myBody then
+                return orig.step(self, body, ...)
+            end
             if cfg.infStamina then body.fatigue = 0 end
             local s = cfg.speed
-            if s == 1 then return orig.step(self, body, ...) end
+            if s == 1 then
+                return orig.step(self, body, ...)
+            end
             local sprint, jog, accel = body.sprint, body.jog, body.acceleration
             body.sprint, body.jog, body.acceleration = sprint * s, jog * s, accel * s
             local ok, a, b = pcall(orig.step, self, body, ...)
@@ -90,11 +97,25 @@ return (function(...)
     end
     local function patch(cls)
         local orig = {}
-        for _, k in ipairs({ _llIO00("\245\76\89\250\58\87\223\230\46\155\64\202\227"), _llIO00("\251\75\95\235\58\75\216\4\65\137\56\185\217\113\84"), _llIO00("\6\62\78\241\52\77\197\245\49\160\76\200"), _llIO00("\255\62\82\244\45\92"), _llIO00("\4\66\94\245\52\94\216\232\46\154\66\193\213"), _llIO00("\5\69\90\245\60") }) do orig[k] = rawget(cls, k) end
+        for _, k in ipairs({ "controlRadius", "interceptRadius", "tackleRadius", "resolveTackle", "shoot", "magnet" }) do
+            orig[k] = rawget(cls, k)
+        end
         state.patched[cls] = orig
-        cls.controlRadius = function(self, p, ...) local r = orig.controlRadius(self, p, ...) if p and p.controlled then r = r * cfg.reach end return r end
-        cls.interceptRadius = function(self, p, ...) local r = orig.interceptRadius(self, p, ...) if p and p.controlled then r = r * cfg.reach end return r end
-        cls.tackleRadius = function(self, p, ...) local r = orig.tackleRadius(self, p, ...) if p and p.controlled then r = r * cfg.tackle end return r end
+        cls.controlRadius = function(self, p, ...)
+            local r = orig.controlRadius(self, p, ...)
+            if p and p.controlled then r = r * cfg.reach end
+            return r
+        end
+        cls.interceptRadius = function(self, p, ...)
+            local r = orig.interceptRadius(self, p, ...)
+            if p and p.controlled then r = r * cfg.reach end
+            return r
+        end
+        cls.tackleRadius = function(self, p, ...)
+            local r = orig.tackleRadius(self, p, ...)
+            if p and p.controlled then r = r * cfg.tackle end
+            return r
+        end
         cls.resolveTackle = function(self, tackler, victim, ...)
             if cfg.unstealable and victim and victim.controlled and tackler and not tackler.controlled then
                 if tackler.keeper then return false end
@@ -104,11 +125,14 @@ return (function(...)
         end
         cls.shoot = function(self, p, target, charge, ...)
             if p and p.controlled and cfg.shotPower ~= 1 then
-                local base = charge or (0.65 + math.max(0, ((p.stats and p.stats[_llIO00("\229\69\90\250\232\56\226\11\50\169")]) or 60) / 250) * 0.35)
+                -- CORRIGIDO: Usando a variável real p.stats.shotPower
+                local base = charge or (0.65 + math.max(0, ((p.stats and p.stats.shotPower) or 60) / 250) * 0.35)
                 charge = base * cfg.shotPower
             end
             local a, b = orig.shoot(self, p, target, charge, ...)
-            if cfg.instaGoal and p and p.controlled then state.putInGoal(self, p) end
+            if cfg.instaGoal and p and p.controlled then
+                state.putInGoal(self, p)
+            end
             return a, b
         end
         cls.magnet = function(self, dt, ...)
@@ -134,53 +158,75 @@ return (function(...)
             ball.velocity = Vector3.new(v.X, ball.velocity.Y, v.Z)
         end
     end
-    for _, cls in ipairs(classes) do patch(cls) end
-    for _, cls in ipairs(motions) do patchMotion(cls) end
-    
+    for _, cls in ipairs(classes) do
+        patch(cls)
+    end
+    for _, cls in ipairs(motions) do
+        patchMotion(cls)
+    end
     state.bridges = 0
     do
         local bseen = {}
         local function patchBridge(cls)
-            if type(cls) ~= _llIO00("\6\62\77\242\45") or bseen[cls] then return end
-            if not hasFns(cls, _llIO00("\245\66\87\235\42\90\212\8\50"), _llIO00("\5\69\90\250\11\93\231\7\48\156\69\186"), _llIO00("\245\79\80\234\49\92")) then return end
+            if type(cls) ~= "table" or bseen[cls] then return end
+            if not hasFns(cls, "celebrate", "shotCutscene", "credit") then return end
             bseen[cls] = true
             state.bridges = state.bridges + 1
-            local orig = { celebrate = rawget(cls, _llIO00("\245\66\87\235\42\90\212\8\50")), shotCutscene = rawget(cls, _llIO00("\5\69\90\250\11\93\231\7\48\156\69\186")), credit = rawget(cls, _llIO00("\245\79\80\234\49\92")) }
+            local orig = { celebrate = rawget(cls, "celebrate"), shotCutscene = rawget(cls, "shotCutscene"), credit = rawget(cls, "credit") }
             state.patched[cls] = orig
-            cls.celebrate = function(self, ...) if cfg.skipGoalAnim then return end return orig.celebrate(self, ...) end
-            cls.shotCutscene = function(self, ...) if cfg.skipCutscenes then return false end return orig.shotCutscene(self, ...) end
+            cls.celebrate = function(self, ...)
+                if cfg.skipGoalAnim then return end
+                return orig.celebrate(self, ...)
+            end
+            cls.shotCutscene = function(self, ...)
+                if cfg.skipCutscenes then return false end
+                return orig.shotCutscene(self, ...)
+            end
             cls.credit = function(self, ...)
                 local r = orig.credit(self, ...)
-                if cfg.skipGoalAnim then pcall(function() LocalPlayer:SetAttribute(_llIO00("\213\66\87\235\42\90\212\8\50\140\69\201\217\104"), 0) end) end
+                if cfg.skipGoalAnim then
+                    pcall(function() LocalPlayer:SetAttribute("isCelebrating", 0) end)
+                end
                 return r
             end
         end
-        local ok, mod = pcall(function() return require(RS:WaitForChild(_llIO00("\223\62\95\233\48\45\225\251\54\165\60")):WaitForChild(_llIO00("\226\69\100\249\49\75\230\214\63\160\59\188\213"), 5)) end)
+        local ok, mod = pcall(function()
+            return require(RS:WaitForChild("Engine"):WaitForChild("Bridge", 5))
+        end)
         if ok then patchBridge(mod) end
-        if getgc then for _, v in ipairs(getgc(true)) do if type(v) == _llIO00("\6\62\77\242\45") then patchBridge(v) end end end
+        if getgc then
+            for _, v in ipairs(getgc(true)) do
+                if type(v) == "table" then patchBridge(v) end
+            end
+        end
     end
-    
     local function findStaminas()
         if not getgc then return end
         for _, t in ipairs(getgc(true)) do
-            if type(t) == _llIO00("\6\62\77\242\45") and not state.staminas[t] then
+            if type(t) == "table" and not state.staminas[t] then
                 local ok, yes = pcall(function()
-                    return type(rawget(t, _llIO00("\5\77\80\244\44"))) == _llIO00("\248\82\89\233\60\81\226\2") and type(rawget(t, _llIO00("\8\62\87\251\45"))) == _llIO00("\0\82\88\232\45\90") and type(rawget(t, _llIO00("\255\62\99"))) == _llIO00("\0\82\88\232\45\90")
+                    return type(rawget(t, "spend")) == "function"
+                        and type(rawget(t, "value")) == "number"
+                        and type(rawget(t, "max")) == "number"
                 end)
                 if ok and yes then
-                    local origSpend = rawget(t, _llIO00("\5\77\80\244\44"))
+                    local origSpend = rawget(t, "spend")
                     state.staminas[t] = origSpend
-                    t.spend = function(...) if cfg.infStamina then return end return origSpend(...) end
+                    t.spend = function(...)
+                        if cfg.infStamina then return end
+                        return origSpend(...)
+                    end
                 end
             end
         end
     end
-    
     local function takeBall()
         local sim = state.sim
-        if not sim or sim.outcome or os.clock() - state.lastStep > 1 then return false, _llIO00("\0\76\11\242\49\94\216\180\58\152\75\184\216") end
+        if not sim or sim.outcome or os.clock() - state.lastStep > 1 then
+            return false, "Simulation not running"
+        end
         local me = controlledOf(sim)
-        if not me then return false, _llIO00("\0\76\11\233\55\86\231\6\60\163\67\186\212\28\81\40\168\163\193\157") end
+        if not me then return false, "Player not found" end
         sim.physics:kick(sim.ball, Vector3.new(0, 0, 0), Vector3.new(0, 0, 0))
         sim.ball.position = me.body.position + me.body.facing * 1.2 + Vector3.new(0, sim.physics.radius, 0)
         sim.ball.spin = Vector3.new(0, 0, 0)
@@ -189,74 +235,85 @@ return (function(...)
         me.ai.immuneUntil = math.max(me.ai.immuneUntil or 0, sim.clock + 0.8)
         return true
     end
-    
     local function scoreNow()
         local sim = state.sim
-        if not sim or sim.outcome or os.clock() - state.lastStep > 1 then return false, _llIO00("\0\76\11\242\49\94\216\180\58\152\75\184\216") end
+        if not sim or sim.outcome or os.clock() - state.lastStep > 1 then
+            return false, "Simulation not running"
+        end
         local me = controlledOf(sim)
-        if not me then return false, _llIO00("\0\76\11\233\55\86\231\6\60\163\67\186\212\28\81\40\168\163\193\157") end
+        if not me then return false, "Player not found" end
         if sim.possession then sim:releaseBall(sim.possession) end
         sim.pass = nil
         state.putInGoal(sim, me)
         return true
     end
-    
     local function pressButton(btn)
-        if not btn then return end
-        if firesignal then
-            pcall(firesignal, btn.Activated)
-            pcall(firesignal, btn.MouseButton1Click)
+        if firesignal and pcall(firesignal, btn.Activated) then
+            return true
         end
         if getconnections then
-            local function fire(conn)
-                local cons = getconnections(conn)
-                for _, c in ipairs(cons) do pcall(function() c:Fire() end) end
+            local ok, conns = pcall(getconnections, btn.Activated)
+            if ok and conns and #conns > 0 then
+                for _, c in ipairs(conns) do
+                    pcall(function() c:Fire() end)
+                end
+                return true
             end
-            pcall(fire, btn.Activated)
-            pcall(fire, btn.MouseButton1Click)
         end
+        return false
     end
-    
     local function strike(btn)
-        pressButton(btn)
-        local vim = game:GetService(_llIO00("\232\70\93\250\61\73\223\221\59\167\76\201\189\93\79\29\174\143\206"))
+        if pressButton(btn) then return end
+        local vim = game:GetService("VirtualInputManager")
         vim:SendKeyEvent(true, Enum.KeyCode.Space, false, game)
-        task.delay(0.03, function() vim:SendKeyEvent(false, Enum.KeyCode.Space, false, game) end)
+        task.delay(0.03, function()
+            vim:SendKeyEvent(false, Enum.KeyCode.Space, false, game)
+        end)
     end
-    
-    local function playerGui() return LocalPlayer:FindFirstChildOfClass(_llIO00("\226\73\76\255\45\90\186\9\54")) end
-    
-    local tr = { sg = nil, lastX = nil, pressedAt = 0, continued = false }
+    local function playerGui()
+        return LocalPlayer:FindFirstChildOfClass("PlayerGui")
+    end
     local function trainingParts(sg)
         for _, d in ipairs(sg:GetDescendants()) do
-            if d:IsA(_llIO00("\216\79\76\243\45")) and d.ClipsDescendants then
+            if d:IsA("Frame") and d.ClipsDescendants then
                 local zone, line
                 for _, c in ipairs(d:GetChildren()) do
-                    if c:IsA(_llIO00("\216\79\76\243\45")) then
-                        if c.Size.X.Offset == 6 and c.AnchorPoint == Vector2.new(0.5, 0.5) then line = c
-                        elseif c.Size.Y.Scale == 1 and c.Size.X.Scale > 0 then zone = c end
+                    if c:IsA("Frame") then
+                        if c.Size.X.Offset == 6 and c.AnchorPoint == Vector2.new(0.5, 0.5) then
+                            line = c
+                        elseif c.Size.Y.Scale == 1 and c.Size.X.Scale > 0 then
+                            zone = c
+                        end
                     end
                 end
-                if zone and line then return zone, line, sg:FindFirstChildWhichIsA(_llIO00("\230\66\99\250\10\93\231\8\60\165"), true) end
+                if zone and line then
+                    return zone, line, sg:FindFirstChildWhichIsA("TextButton", true)
+                end
             end
         end
     end
+    local tr = { sg = nil, lastX = nil, pressedAt = 0, continued = false }
     track(RunService.RenderStepped:Connect(function()
         if not cfg.autoGreen then return end
         local pg = playerGui()
-        local sg = pg and pg:FindFirstChild(_llIO00("\213\69\80\243\49\91\231\6\70\139\73\182\217\106\74\42\174"))
-        if not sg then tr.sg = nil return end
+        local sg = pg and pg:FindFirstChild("TrainingMinigame")
+        if not sg then
+            tr.sg = nil
+            return
+        end
         if tr.sg ~= sg then
             tr.sg = sg
             tr.zone, tr.line, tr.btn = trainingParts(sg)
             tr.lastX, tr.continued = nil, false
         end
         if not (tr.zone and tr.btn) then return end
-        if tr.btn.Text == _llIO00("\213\44\57\218\17\54\200\217") then
+        if tr.btn.Text == "Continue" then
             if not tr.continued then
                 tr.continued = true
                 local btn = tr.btn
-                task.delay(0.8, function() if btn.Parent then pressButton(btn) end end)
+                task.delay(0.8, function()
+                    if btn.Parent then pressButton(btn) end
+                end)
             end
             return
         end
@@ -273,30 +330,38 @@ return (function(...)
             strike(tr.btn)
         end
     end))
-    
     task.spawn(function()
         while state.alive do
             task.wait(1)
             local pg = playerGui()
-            if pg and (cfg.autoTrain or cfg.autoBond) and not pg:FindFirstChild(_llIO00("\213\69\80\243\49\91\231\6\70\139\73\182\217\106\74\42\174")) then
+            if pg and (cfg.autoTrain or cfg.autoBond) and not pg:FindFirstChild("TrainingMinigame") then
                 local trainBtn
                 for _, b in ipairs(pg:GetDescendants()) do
-                    if b:IsA(_llIO00("\230\66\99\250\10\93\231\8\60\165")) and b.Visible then
-                        if cfg.autoBond and b.Text:match(_llIO00("\240\31\58\212\12\8\152\191")) then pressButton(b)
-                        elseif cfg.autoTrain and not trainBtn and b.Text == _llIO00("\230\47\44\207\22\8\164\234\254") then trainBtn = b end
+                    if b:IsA("TextButton") and b.Visible then
+                        if cfg.autoBond and b.Text:match("Bond") then
+                            pressButton(b)
+                        elseif cfg.autoTrain and not trainBtn and b.Text == "Train" then
+                            trainBtn = b
+                        end
                     end
                 end
-                if trainBtn then pressButton(trainBtn) task.wait(1) end
+                if trainBtn then
+                    pressButton(trainBtn)
+                    task.wait(1)
+                end
             end
         end
     end)
-    
     do
-        local ok, Chem = pcall(function() return require(RS:WaitForChild(_llIO00("\213\69\80\243\49\91\231\6\70\123\56\201\209"))) end)
-        if ok and type(Chem) == _llIO00("\6\62\77\242\45") and type(Chem.cooldownLeft) == _llIO00("\248\82\89\233\60\81\226\2") then
+        local ok, Chem = pcall(function()
+            return require(RS:WaitForChild("Chemistry"))
+        end)
+        if ok and type(Chem) == "table" and type(Chem.cooldownLeft) == "function" then
             local origCooldown = Chem.cooldownLeft
             Chem.cooldownLeft = function(data, who, kind, ...)
-                if cfg.noCooldown and (kind == _llIO00("\6\79\76\239\54") or kind == _llIO00("\244\76\89\234")) then return 0 end
+                if cfg.noCooldown and (kind == "flow" or kind == "style") then
+                    return 0
+                end
                 return origCooldown(data, who, kind, ...)
             end
             state.patched[Chem] = { cooldownLeft = origCooldown }
@@ -304,7 +369,7 @@ return (function(...)
     end
 
     --════════════════════════════════════════════════════════════════
-    -- KOTA HUB UI SETUP
+    -- UI SETUP (KOTA HUB)
     --════════════════════════════════════════════════════════════════
     local T = {
         bg = Color3.fromRGB(14, 14, 18),
@@ -336,7 +401,7 @@ return (function(...)
         end
     end)
 
-    local sg = new("ScreenGui", { Name = "KotaHub_V4", ResetOnSpawn = false, ZIndexBehavior = Enum.ZIndexBehavior.Sibling, DisplayOrder = 999 }, nil)
+    local sg = new("ScreenGui", { Name = "KotaHub_V5", ResetOnSpawn = false, ZIndexBehavior = Enum.ZIndexBehavior.Sibling, DisplayOrder = 999 }, nil)
     local okParent = pcall(function() sg.Parent = (gethui and gethui()) or game:GetService("CoreGui") end)
     if not okParent then sg.Parent = LocalPlayer:WaitForChild("PlayerGui") end
     state.gui = sg
@@ -362,8 +427,8 @@ return (function(...)
     new("UIPadding", { PaddingLeft = UDim.new(0, 4), PaddingTop = UDim.new(0, 4), PaddingBottom = UDim.new(0, 4), PaddingRight = UDim.new(0, 4) }, tabBar)
 
     local pages, tabs = {}, {}
-    local TAB_NAMES = { "HOME", "MATCH", "TRAINING", "CAREER", "FARM" }
-    local currentTab = "HOME"
+    local TAB_NAMES = { "MATCH", "TRAINING", "CAREER", "FARM" }
+    local currentTab = "MATCH"
 
     local function selectTab(name)
         currentTab = name
@@ -471,8 +536,8 @@ return (function(...)
         return b
     end
 
-    local floatTake = makeDraggableBtn("Take Ball ["..cfg.keyTake.Name.."]", function() takeBall() end, UDim2.new(1, -120, 0.5, -24))
-    local floatScore = makeDraggableBtn("Score ["..cfg.keyScore.Name.."]", function() scoreNow() end, UDim2.new(1, -120, 0.5, 20))
+    local floatTake = makeDraggableBtn("Take Ball [G]", function() takeBall() end, UDim2.new(1, -120, 0.5, -24))
+    local floatScore = makeDraggableBtn("Score [H]", function() scoreNow() end, UDim2.new(1, -120, 0.5, 20))
 
     -- UI COMPONENTS
     local order = 0
@@ -541,153 +606,39 @@ return (function(...)
         return new("TextLabel", { Size = UDim2.new(1, 0, 0, 0), AutomaticSize = Enum.AutomaticSize.Y, BackgroundTransparency = 1, Text = text, TextWrapped = true, Font = Enum.Font.Gotham, TextSize = 11, TextColor3 = T.muted, TextXAlignment = Enum.TextXAlignment.Left, LayoutOrder = nextOrder(), ZIndex = 12 }, page)
     end
 
-    -- KEYBIND SYSTEM
-    local binding = nil
-    local function keybind(page, label, keyName, floatBtn)
-        local row = new("Frame", { Size = UDim2.new(1, 0, 0, 36), BackgroundColor3 = T.panel, LayoutOrder = nextOrder(), ZIndex = 12 }, page)
-        corner(row) stroke(row)
-        new("TextLabel", { Size = UDim2.new(1, -80, 1, 0), Position = UDim2.fromOffset(12, 0), BackgroundTransparency = 1, Text = label, Font = Enum.Font.GothamMedium, TextSize = 13, TextColor3 = T.text, TextXAlignment = Enum.TextXAlignment.Left, ZIndex = 13 }, row)
-        
-        local btn = new("TextButton", { Size = UDim2.fromOffset(60, 24), Position = UDim2.new(1, -72, 0.5, -12), BackgroundColor3 = T.panelHi, Text = cfg[keyName].Name, Font = Enum.Font.GothamBold, TextSize = 12, TextColor3 = T.accent, AutoButtonColor = false, ZIndex = 13 }, row)
-        corner(btn, 6) stroke(btn, T.stroke)
-        
-        btn.MouseButton1Click:Connect(function()
-            btn.Text = "..."
-            binding = function(input)
-                if input.UserInputType == Enum.UserInputType.Keyboard then
-                    cfg[keyName] = input.KeyCode
-                    btn.Text = input.KeyCode.Name
-                    if floatBtn then
-                        local oldText = floatBtn.Text
-                        local newText = string.gsub(oldText, "%[.-%]", "["..input.KeyCode.Name.."]")
-                        floatBtn.Text = newText
-                    end
-                    binding = nil
-                end
-            end
-        end)
-    end
-
-    --════════════════════════════════════════════════════════════════
-    -- HOME TAB
-    --════════════════════════════════════════════════════════════════
-    local P = pages.HOME
-    section(P, "DEVELOPMENT TEAM")
-    
-    local creditsRow = new("Frame", { Size = UDim2.new(1, 0, 0, 210), BackgroundTransparency = 1, LayoutOrder = nextOrder(), ZIndex = 12 }, P)
-    new("UIListLayout", { FillDirection = Enum.FillDirection.Horizontal, Padding = UDim.new(0, 8), SortOrder = Enum.SortOrder.LayoutOrder }, creditsRow)
-
-    local function createAvatarCard(parent, username, role, order)
-        local card = new("Frame", { Size = UDim2.new(0.5, -4, 1, 0), BackgroundColor3 = T.panel, BorderSizePixel = 0, LayoutOrder = order, ZIndex = 12 }, parent)
-        corner(card) stroke(card)
-        
-        local viewport = new("ViewportFrame", { 
-            Size = UDim2.new(1, -16, 0, 150), 
-            Position = UDim2.fromOffset(8, 8), 
-            BackgroundColor3 = T.bg, 
-            BackgroundTransparency = 0.5,
-            ZIndex = 13
-        }, card)
-        corner(viewport, 6)
-
-        local worldModel = Instance.new("WorldModel")
-        worldModel.Parent = viewport
-        
-        local roleLabel = new("TextLabel", { 
-            Size = UDim2.new(1, -16, 0, 18), 
-            Position = UDim2.new(0, 8, 0, 164),
-            BackgroundTransparency = 1, 
-            Text = role, 
-            Font = Enum.Font.GothamBold, 
-            TextSize = 12, 
-            TextColor3 = T.accent, 
-            TextXAlignment = Enum.TextXAlignment.Center,
-            ZIndex = 13
-        }, card)
-        
-        local nameLabel = new("TextLabel", { 
-            Size = UDim2.new(1, -16, 0, 18), 
-            Position = UDim2.new(0, 8, 0, 182),
-            BackgroundTransparency = 1, 
-            Text = username, 
-            Font = Enum.Font.GothamMedium, 
-            TextSize = 13, 
-            TextColor3 = T.text, 
-            TextXAlignment = Enum.TextXAlignment.Center,
-            ZIndex = 13
-        }, card)
-
-        task.spawn(function()
-            local success, userId = pcall(function() return Players:GetUserIdFromNameAsync(username) end)
-            if success and userId then
-                local success2, model = pcall(function() return Players:CreateHumanoidModelFromUserId(userId) end)
-                if success2 and model then
-                    model.Parent = worldModel
-                    
-                    local animate = model:FindFirstChild("Animate")
-                    if animate then animate:Destroy() end
-                    
-                    local hrp = model:FindFirstChild("HumanoidRootPart") or model:FindFirstChild("Torso") or model:FindFirstChild("Head")
-                    if hrp then
-                        model.PrimaryPart = hrp
-                        model:PivotTo(CFrame.new(0, 0, 0))
-                        hrp.Anchored = true
-                    end
-
-                    for _, part in ipairs(model:GetDescendants()) do
-                        if part:IsA("BasePart") and part ~= hrp then
-                            part.Anchored = false
-                            part.CanCollide = false
-                        end
-                    end
-
-                    local cam = Instance.new("Camera")
-                    cam.FieldOfView = 30
-                    cam.Parent = viewport
-                    cam.CFrame = CFrame.lookAt(Vector3.new(0, 0.5, -9.5), Vector3.new(0, 0, 0))
-                    viewport.CurrentCamera = cam
-                end
-            end
-        end)
-    end
-
-    createAvatarCard(creditsRow, "japachina23", "Owner, Dev & ProGamer", 1)
-    createAvatarCard(creditsRow, "nessanepq", "Build Helper", 2)
-    
-    section(P, "ABOUT")
-    note(P, "KOTA HUB v4.2.0\nUI Framework integrated with Blue Lock Rivals engine.")
-
     --════════════════════════════════════════════════════════════════
     -- MATCH TAB
     --════════════════════════════════════════════════════════════════
-    P = pages.MATCH
-    section(P, "MATCH FEATURES")
+    local P = pages.MATCH
+    section(P, "BALL CONTROL")
     toggle(P, "Magnet Ball", "magnet")
     slider(P, "Magnet Range", "magnetRange", 10, 80, 1, "%.0f")
     slider(P, "Magnet Power", "magnetPower", 0.1, 1, 0.05, "%.2f")
     slider(P, "Reach", "reach", 1, 4, 0.1, "%.1f")
     slider(P, "Tackle", "tackle", 1, 3, 0.1, "%.1f")
-    slider(P, "Speed", "speed", 1, 3, 0.05, "%.2f")
     toggle(P, "Unstealable", "unstealable")
+    
+    section(P, "MOVEMENT")
+    slider(P, "Speed", "speed", 1, 3, 0.05, "%.2f")
     toggle(P, "Infinite Stamina", "infStamina")
     
     section(P, "SHOOTING")
     slider(P, "Shot Power", "shotPower", 1, 3, 0.1, "%.1f")
     toggle(P, "Insta Goal", "instaGoal")
     
-    section(P, "KEYBINDS")
-    keybind(P, "Take Ball Key", "keyTake", floatTake)
-    keybind(P, "Score Now Key", "keyScore", floatScore)
-    keybind(P, "Toggle UI Key", "keyToggleUI", nil)
+    section(P, "SKIP")
+    toggle(P, "Skip Goal Animation", "skipGoalAnim")
+    toggle(P, "Skip Cutscenes", "skipCutscenes")
 
     --════════════════════════════════════════════════════════════════
     -- TRAINING TAB
     --════════════════════════════════════════════════════════════════
     P = pages.TRAINING
-    section(P, "AUTO TRAIN")
-    toggle(P, "Auto Green (Minigame)", "autoGreen")
+    section(P, "MINIGAME")
+    toggle(P, "Auto Green", "autoGreen")
     toggle(P, "Auto Train", "autoTrain")
     toggle(P, "Auto Bond", "autoBond")
+    section(P, "COOLDOWNS")
     toggle(P, "No Cooldowns", "noCooldown")
     note(P, "Automates the training minigame and button presses.")
 
@@ -695,7 +646,7 @@ return (function(...)
     -- CAREER TAB
     --════════════════════════════════════════════════════════════════
     P = pages.CAREER
-    section(P, "SKILL POINTS")
+    section(P, "PROGRESSION")
     do
         local SP_STEP = 110
         local spBtn, busy = nil, false
@@ -705,12 +656,12 @@ return (function(...)
             busy = true
             local msg
             local ok, err = pcall(function()
-                local AS = require(LocalPlayer.PlayerScripts:WaitForChild(_llIO00("\213\69\76\248\41\75\231\249\63\140\64")):WaitForChild(_llIO00("\211\64\95\239\62\77\198\0\60\171\42\201\209\112\70")))
+                local AS = require(LocalPlayer.PlayerScripts:WaitForChild("AutoSave"):WaitForChild("AutoSave"))
                 local idx, slot = AS.get()
                 if not slot then msg = "No slot" return end
                 slot.skillPoints = (slot.skillPoints or 0) + SP_STEP
                 AS.notifyExternalChange()
-                local saved = RS:WaitForChild(_llIO00("\229\73\90\250\26\77\224\3\65\156\74")):WaitForChild(_llIO00("\229\62\97\235\27\84\226\8")):InvokeServer(idx, slot)
+                local saved = RS:WaitForChild("RemoteEvents"):WaitForChild("SaveSlot"):InvokeServer(idx, slot)
                 msg = (saved and "Saved: " or "Failed: ") .. tostring(slot.skillPoints) .. " SP"
             end)
             if not ok then warn("SP error:", err) end
@@ -721,10 +672,10 @@ return (function(...)
 
     section(P, "HUNDRED CHALLENGE")
     do
-        local hc = require(RS:WaitForChild(_llIO00("\215\68\90\217\48\73\229\249\49"))).hundredChallenge
+        local hc = require(RS:WaitForChild("EgoShared")).hundredChallenge
         local OVERHEAD = 0.5
         local function finishAt() return math.max(1, cfg.hundredTime - OVERHEAD) end
-        local run = { t0 = nil, lastSeen = 0, fired = setmetatable({}, { __mode = _llIO00("\253") }) }
+        local run = { t0 = nil, lastSeen = 0, fired = setmetatable({}, { __mode = "k" }) }
         local function hit(btn)
             if firesignal then pcall(firesignal, btn.MouseButton1Down)
             elseif getconnections then for _, c in ipairs(getconnections(btn.MouseButton1Down)) do pcall(function() c:Fire() end) end end
@@ -732,13 +683,17 @@ return (function(...)
         local function scan(frame)
             local goals, target = nil, nil
             for _, d in ipairs(frame:GetDescendants()) do
-                if d:IsA(_llIO00("\230\66\99\250\20\73\213\249\57")) then
-                    local n = tonumber(string.match(d.Text, _llIO00("\240\36\58\199\20\59\173\180\245\92\59\128\153\43")))
+                if d:IsA("TextLabel") then
+                    local n = tonumber(string.match(d.Text, "(%d+)"))
                     if n and (not goals or n > goals) then goals = n end
-                elseif d:IsA(_llIO00("\230\66\99\250\10\93\231\8\60\165")) and d.Text == _llIO00("") and not run.fired[d] then
+                elseif d:IsA("TextButton") and d.Text == "" and not run.fired[d] then
                     local p = d.Parent
-                    local c = p and p:IsA(_llIO00("\216\79\76\243\45")) and p:FindFirstChildOfClass(_llIO00("\231\38\46\245\58\86\216\6"))
-                    if c and p:FindFirstChildOfClass(_llIO00("\231\38\62\250\58\87\222\249")) and (c.CornerRadius.Offset >= 30 or c.CornerRadius.Scale >= 0.5) and p.AbsoluteSize.X > 0 and p.AbsoluteSize.X < 300 then target = d end
+                    local c = p and p:IsA("Frame") and p:FindFirstChildOfClass("UICorner")
+                    if c and p:FindFirstChildOfClass("UIStroke")
+                        and (c.CornerRadius.Offset >= 30 or c.CornerRadius.Scale >= 0.5)
+                        and p.AbsoluteSize.X > 0 and p.AbsoluteSize.X < 300 then
+                        target = d
+                    end
                 end
             end
             return goals, target
@@ -748,8 +703,8 @@ return (function(...)
         
         track(RunService.Heartbeat:Connect(function()
             if not cfg.autoHundred then return end
-            local pg = LocalPlayer:FindFirstChildOfClass(_llIO00("\226\73\76\255\45\90\186\9\54"))
-            local frame = pg and pg:FindFirstChild(_llIO00("\217\76\76\242\26\93\230\252\19\169\56\194\213"), true)
+            local pg = LocalPlayer:FindFirstChildOfClass("PlayerGui")
+            local frame = pg and pg:FindFirstChild("HundredChallenge", true)
             if not frame then run.t0 = nil return end
             local goals, target = scan(frame)
             local now = os.clock()
@@ -761,9 +716,9 @@ return (function(...)
         end))
     end
 
-    section(P, "FLOW RIGGING")
+    section(P, "FLOW ROLLS")
     do
-        local FD = require(RS:WaitForChild(_llIO00("\216\73\90\253\12\73\231\245")))
+        local FD = require(RS:WaitForChild("FlowData"))
         local pick = { aura = 0, technique = 0 }
         local lists = { aura = FD.auras, technique = FD.techniques }
         local function chosen(kind) local i = pick[kind] return i > 0 and lists[kind][i] or nil end
@@ -776,8 +731,8 @@ return (function(...)
             b = button(P, "", false, function() pick[kind] = (pick[kind] + 1) % (#lists[kind] + 1) render() end)
             render()
         end
-        cycler(_llIO00("\243\82\93\231"), "Aura")
-        cycler(_llIO00("\6\66\78\238\54\81\228\9\50"), "Technique")
+        cycler("aura", "Aura")
+        cycler("technique", "Technique")
         toggle(P, "Rig Flow", "rigFlow")
         
         local setBtn
@@ -785,129 +740,374 @@ return (function(...)
         setBtn = button(P, SET_LABEL, true, function()
             local msg
             local ok, err = pcall(function()
-                local AS = require(LocalPlayer.PlayerScripts:WaitForChild(_llIO00("\213\69\76\248\41\75\231\249\63\140\64")):WaitForChild(_llIO00("\211\64\95\239\62\77\198\0\60\171\42\201\209\112\70")))
+                local AS = require(LocalPlayer.PlayerScripts:WaitForChild("AutoSave"):WaitForChild("AutoSave"))
                 local idx, slot = AS.get()
                 if not slot then msg = "No slot" return end
-                local a, t = chosen(_llIO00("\243\82\93\231")), chosen(_llIO00("\6\66\78\238\54\81\228\9\50"))
+                local a, t = chosen("aura"), chosen("technique")
                 if not a and not t then msg = "Pick Aura/Technique" return end
                 local flow = FD.ensure(slot)
                 if a then flow.aura = a.name end
                 if t then flow.technique = t.name end
                 AS.notifyExternalChange()
-                local saved = RS:WaitForChild(_llIO00("\229\73\90\250\26\77\224\3\65\156\74")):WaitForChild(_llIO00("\229\62\97\235\27\84\226\8")):InvokeServer(idx, slot)
+                local saved = RS:WaitForChild("RemoteEvents"):WaitForChild("SaveSlot"):InvokeServer(idx, slot)
                 msg = saved and "Applied" or "Failed"
             end)
             if not ok then warn("Flow error:", err) end
             setBtn.Text = ok and msg or "Error"
             task.delay(1.5, function() setBtn.Text = SET_LABEL end)
         end)
+        note(P, "Bypasses the roll animation and directly sets your flow.")
+    end
+
+    section(P, "WEAPON REROLL")
+    do
+        local EgoClient = require(RS:WaitForChild("EgoClient"))
+        local WD = require(RS:WaitForChild("WeaponData"))
+        local RANKS = {}
+        for i, o in ipairs(WD.rarityOdds) do RANKS[o.rarity] = i end
+        local targets = { "Common", "Rare", "Epic", "Legendary" }
+        local pick = { target = 2, index = 1, lucky = false }
+        local running, stop = false, false
+        local info, startBtn
+        local lastCall = 0
+        local function call(...)
+            local r
+            for _ = 1, 6 do
+                local wait = lastCall + 1.5 - os.clock()
+                if wait > 0 then task.wait(wait) end
+                r = EgoClient.call(...)
+                lastCall = os.clock()
+                if r.status ~= "cool" then break end
+                task.wait(2)
+            end
+            return r
+        end
+        local tb
+        tb = button(P, "", false, function()
+            pick.target = pick.target % #targets + 1
+            tb.Text = "Target: " .. targets[pick.target]
+        end)
+        tb.Text = "Target: " .. targets[pick.target]
+        local ib
+        ib = button(P, "Weapon Index: " .. pick.index, false, function()
+            pick.index = pick.index == 1 and 2 or 1
+            ib.Text = "Weapon Index: " .. pick.index
+        end)
+        local lb
+        lb = button(P, "Lucky Roll: OFF", false, function()
+            pick.lucky = not pick.lucky
+            lb.Text = "Lucky Roll: " .. (pick.lucky and "ON" or "OFF")
+        end)
+        local function rarityOf(res)
+            local w = type(res.weapons) == "table" and (res.weapons[pick.index] or res.weapons[tostring(pick.index)])
+            if not w then return nil end
+            local def = w.weaponName and WD.byWeaponName(w.weaponName)
+            return (def and def.rarity) or w.rarity, w.weaponName
+        end
+        local function run()
+            local AS = require(LocalPlayer.PlayerScripts:WaitForChild("AutoSave"):WaitForChild("AutoSave"))
+            local slot, data = AS.get()
+            if not data then
+                info.Text = "No slot data loaded"
+                return
+            end
+            local cur = data.weapons and data.weapons[pick.index]
+            local want = RANKS[targets[pick.target]]
+            if cur and (RANKS[cur.rarity] or 0) >= want then
+                info.Text = "Current weapon is already " .. tostring(cur.rarity) .. " or higher. No rolls needed."
+                return
+            end
+            local rolls = 0
+            while not stop and state.alive do
+                local r = call("reroll", slot, pick.index, pick.lucky)
+                if r.status ~= "ok" then
+                    info.Text = ("Rolled %d times. Status: %s"):format(rolls, r.status == "error" and "Unknown error" or tostring(r.status))
+                    return
+                end
+                rolls = rolls + 1
+                local rarity, name = rarityOf(r)
+                if name and data.weapons then
+                    local def = WD.byWeaponName(name)
+                    if def then data.weapons[pick.index] = table.clone(def) end
+                    AS.notifyExternalChange()
+                end
+                info.Text = ("Roll %d: %s (%s)"):format(rolls, tostring(name), tostring(rarity))
+                if rarity and (RANKS[rarity] or 0) >= want then
+                    info.Text = ("Got %s (%s) after %d rolls!"):format(tostring(name), rarity, rolls)
+                    return
+                end
+                task.wait(1)
+            end
+            info.Text = ("Stopped after %d rolls."):format(rolls)
+        end
+        local LABEL = "START REROLL"
+        startBtn = button(P, LABEL, true, function()
+            if running then
+                stop = true
+                return
+            end
+            running, stop = true, false
+            startBtn.Text = "STOPPING..."
+            local ok, err = pcall(run)
+            if not ok then info.Text = "Error: " .. tostring(err) end
+            running = false
+            startBtn.Text = LABEL
+        end)
+        info = note(P, ("Auto rolling for a %s %s...\nClick start again to stop."):format(targets[pick.target], pick.lucky and "Lucky" or ""))
+    end
+
+    section(P, "SKIP REROLL")
+    do
+        local EgoClient = require(RS:WaitForChild("EgoClient"))
+        local EgoShared = require(RS:WaitForChild("EgoShared"))
+        local PASS = EgoShared.skipRerollPass
+        local origCached, origOwns = EgoClient.passCached, EgoClient.ownsPass
+        EgoClient.passCached = function(id, ...)
+            if id == PASS and cfg.skipRoll then return true end
+            return origCached(id, ...)
+        end
+        EgoClient.ownsPass = function(id, ...)
+            if id == PASS and cfg.skipRoll then return true end
+            return origOwns(id, ...)
+        end
+        state.restoreSkip = function()
+            EgoClient.passCached, EgoClient.ownsPass = origCached, origOwns
+        end
+        toggle(P, "Skip Animation", "skipRoll")
+        toggle(P, "Auto Skip UI", "autoSkip")
+        note(P, "Skip Animation bypasses the reroll pass requirement and skips the animation entirely.")
+        local pressed = setmetatable({}, { __mode = "k" })
+        local nextLook = 0
+        track(RunService.Heartbeat:Connect(function()
+            if not (cfg.autoSkip and cfg.skipRoll) or os.clock() < nextLook then return end
+            nextLook = os.clock() + 0.15
+            local pg = LocalPlayer:FindFirstChildOfClass("PlayerGui")
+            if not pg then return end
+            for _, b in ipairs(pg:GetDescendants()) do
+                if b:IsA("TextButton") and b.Text == "SKIP" and b.Visible and not pressed[b] then
+                    pressed[b] = true
+                    task.delay(0.5, function() pressed[b] = nil end)
+                    if firesignal then
+                        pcall(firesignal, b.MouseButton1Click)
+                    elseif getconnections then
+                        for _, c in ipairs(getconnections(b.MouseButton1Click)) do pcall(c.Fire, c) end
+                    end
+                end
+            end
+        end))
     end
 
     --════════════════════════════════════════════════════════════════
     -- FARM TAB
     --════════════════════════════════════════════════════════════════
     P = pages.FARM
-    section(P, "CODES & ACHIEVEMENTS")
-    
-    -- MÓDULO DE COMUNICAÇÃO DIRETA COM O SERVIDOR
-    local EgoClient = require(RS:WaitForChild(_llIO00("\215\68\90\201\52\81\216\2\65")))
-    local lastCall = 0
-    local function call(...)
-        local r
-        for _ = 1, 6 do
-            local wait = lastCall + 1.5 - os.clock()
-            if wait > 0 then task.wait(wait) end
-            local ok, res = pcall(EgoClient.call, ...)
-            lastCall = os.clock()
-            r = ok and type(res) == _llIO00("\6\62\77\242\45") and res or { status = ok and _llIO00("\247\79\93\245\58") or tostring(res) }
-            if r.status ~= _llIO00("\244\82\94\255") then break end
-            task.wait(2)
+    do
+        local EgoClient = require(RS:WaitForChild("EgoClient"))
+        local EgoShared = require(RS:WaitForChild("EgoShared"))
+        local GauntletData = require(RS:WaitForChild("GauntletData"))
+        local lastCall = 0
+        local function call(...)
+            local r
+            for _ = 1, 6 do
+                local wait = lastCall + 1.5 - os.clock()
+                if wait > 0 then task.wait(wait) end
+                local ok, res = pcall(EgoClient.call, ...)
+                lastCall = os.clock()
+                r = ok and type(res) == "table" and res or { status = ok and "error" or tostring(res) }
+                if r.status ~= "cool" then break end
+                task.wait(2)
+            end
+            return r
         end
-        return r
-    end
-    local function coins()
-        local p = EgoClient.profile()
-        return p and tonumber(p.egoCoins) or 0
-    end
+        local function coins()
+            local p = EgoClient.profile()
+            return p and tonumber(p.egoCoins) or 0
+        end
+        local function hold(job, secs)
+            local untilT = os.clock() + secs
+            while os.clock() < untilT do
+                if job.stop or not state.alive then return false end
+                task.wait(0.25)
+            end
+            return true
+        end
+        local function report(job, verb, ...)
+            local r = call(verb, "auto", true, ...)
+            if r.status == "wait" and tonumber(r.wait) then
+                if not hold(job, tonumber(r.wait) + 0.5) then return r end
+                r = call(verb, "auto", true, ...)
+            end
+            return r
+        end
+        local function farmButton(label, idleText, run)
+            local job = { running = false, stop = false }
+            local btn, info
+            btn = button(P, label, true, function()
+                if job.running then
+                    job.stop = true
+                    btn.Text = "STOPPING"
+                    return
+                end
+                job.running, job.stop = true, false
+                btn.Text = label .. " (Running)"
+                task.spawn(function()
+                    local ok, err = pcall(run, job, function(t) info.Text = t end)
+                    if not ok then info.Text = "Error: " .. tostring(err) end
+                    job.running = false
+                    btn.Text = label
+                end)
+            end)
+            info = note(P, idleText)
+            return job
+        end
 
-    button(P, "Redeem All Codes", true, function()
-        local codes = {
-            "TWELVETHOUSANDFIVEHUNDREDLIKES", "TWENTYFIVETHOUSANDLIKES", "OLDHALLOWEEN",
-            "DELAYEDCOOLSORRY", "VERIFIEDTHANKYOU", "ONTOTHESEASON", "MOBILESUPERFIX",
-            "WEFIXBUGSALLDAY", "FEWMOREBUGS", "COOLLITTLEUPDATE", "GIFTFROMUS",
-            "MOREGIFTSFROMUS", "IZEXLHBD", "CHILLUPDATE"
-        }
-        local pg = playerGui()
-        if not pg then return end
-        
-        local textBox = pg:FindFirstChildWhichIsA("TextBox", true)
-        local redeemBtn
-        for _, btn in ipairs(pg:GetDescendants()) do
-            if btn:IsA("TextButton") and btn.Visible then
-                local txt = btn.Text:upper()
-                if txt:find("RESGATAR") or txt:find("REDEEM") then
-                    redeemBtn = btn
-                    break
+        section(P, "AUTO FARM (INFINITE)")
+        state.infJob = farmButton("START INFINITE FARM", "Auto-farms the Infinite mode. Keeps starting and winning waves. Press again to stop.", function(job, say)
+            local cfgInf = EgoShared.infinite
+            local startCoins, waves = coins(), 0
+            while not job.stop and state.alive do
+                local st = call("infinite", "info")
+                local run = st.run
+                if st.status ~= "ok" then
+                    say("Failed to get info: " .. tostring(st.status) .. ". Retrying in 5s...")
+                    if not hold(job, 5) then break end
+                elseif type(run) ~= "table" then
+                    say("Could not find wave info. Are you in the Infinite lobby?")
+                    return
+                else
+                    if type(run.picking) == "table" and #run.picking > 0 then
+                        local t = call("infinite", "pick", run.picking[1])
+                        say("Wave " .. tostring(run.wave) .. ": picked " .. tostring(run.picking[1]) .. " (status: " .. tostring(t.status) .. ")")
+                    end
+                    local began = run.inMatch == true
+                    if not began then
+                        local b = call("infinite", "start")
+                        if b.status == "picking" then
+                            local again = call("infinite", "info")
+                            local pk = again.run and again.run.picking
+                            if type(pk) == "table" and #pk > 0 then call("infinite", "pick", pk[1]) end
+                            b = call("infinite", "start")
+                        end
+                        began = b.status == "ok"
+                        if not began then
+                            say("Wave " .. tostring(run.wave) .. ": failed to start (" .. tostring(b.status) .. "). Retrying in 4s...")
+                            if not hold(job, 4) then break end
+                        end
+                    end
+                    if began then
+                        say(("Wave %s (Waves won: %d | Coins: +%d)"):format(tostring(run.wave), waves, coins() - startCoins))
+                        if not hold(job, (cfgInf.minSeconds or 30) + 1) then break end
+                        local r = report(job, "infinite", 2, 0, 8.4, cfgInf.firstTo or 2, 0)
+                        if r.status == "result" and r.won then
+                            waves = waves + 1
+                            say(("Wave %s WON! (+%s coins | Waves: %d | Total: +%d | Bank: %d)"):format(tostring(run.wave), tostring(r.coins or 0), waves, coins() - startCoins, coins()))
+                        elseif r.status == "kicked" then
+                            say("Kicked at wave " .. tostring(r.wave) .. ". Maybe you got reported or disconnected.")
+                            return
+                        else
+                            say("Wave " .. tostring(run.wave) .. ": result status " .. tostring(r.status) .. ". Retrying in 3s...")
+                            if not hold(job, 3) then break end
+                        end
+                    end
                 end
             end
-        end
-        
-        if not textBox or not redeemBtn then
-            Hub:Notify("Códigos", "Abra o menu de Configurações primeiro!", "error", 5)
-            return
-        end
-        
-        for _, code in ipairs(codes) do
-            textBox:CaptureFocus()
-            textBox.Text = code
-            task.wait(0.1)
-            textBox:ReleaseFocus()
-            
-            if firesignal then pcall(firesignal, textBox.FocusLost, true) end
-            task.wait(0.2)
-            
-            pressButton(redeemBtn)
-            print("[KOTA] Tentando resgatar: " .. code)
-            task.wait(1.5)
-        end
-        Hub:Notify("Códigos", "Tentativa de resgate concluída.", "success", 3)
-    end)
-
-    -- FUNÇÃO EXATA DO SCRIPT ORIGINAL (CHAMADA DIRETA NO SERVIDOR)
-    section(P, "CLAIM REWARDS")
-    local claimBtn, claimInfo
-    claimBtn = button(P, "CLAIM DAILY + ACHIEVEMENTS", false, function()
-        claimBtn.Text = "CLAIMING..."
-        task.spawn(function()
-            local before = coins()
-            local AS = require(LocalPlayer.PlayerScripts:WaitForChild("AutoSave"):WaitForChild("AutoSave"))
-            local slot = AS.get()
-            local d = call("daily")
-            local a = call("claimAchievements", slot)
-            claimInfo.Text = ("Daily: %s | Achievements: %s | Coins gained: %d"):format(tostring(d.status), tostring(a.status), coins() - before)
-            claimBtn.Text = "CLAIM DAILY + ACHIEVEMENTS"
+            say(("Farm stopped. Total waves won: %d | Total coins gained: %d"):format(waves, coins() - startCoins))
         end)
-    end)
-    claimInfo = note(P, "Claim daily and achievement rewards directly via server call.")
 
-    section(P, "MISC")
-    toggle(P, "Anti-AFK", "antiAfk")
-    toggle(P, "Skip Roll", "skipRoll")
-    toggle(P, "Auto Skip UI", "autoSkip")
-    toggle(P, "Skip Goal Anim", "skipGoalAnim")
-    toggle(P, "Skip Cutscenes", "skipCutscenes")
+        section(P, "AUTO FARM (GAUNTLET)")
+        state.gauJob = farmButton("START GAUNTLET FARM", "Auto-farms the Gauntlet mode. Completes matches and earns coins. Press again to stop.", function(job, say)
+            local cfgG = EgoShared.gauntlet
+            local startCoins, matches, clears = coins(), 0, 0
+            local saved
+            while not job.stop and state.alive do
+                local st = call("gauntlet", "info")
+                local run = st.run
+                if st.status ~= "ok" then
+                    say("Failed to get info: " .. tostring(st.status) .. ". Retrying in 5s...")
+                    if not hold(job, 5) then break end
+                elseif type(run) ~= "table" then
+                    if not saved then
+                        say("Could not find gauntlet info. Are you in the Gauntlet lobby?")
+                        return
+                    end
+                    local s = call("gauntlet", "resume", saved.slot, saved.lineup, saved.spot)
+                    say("Resume attempt: " .. tostring(s.status))
+                    if s.status ~= "resumed" and s.status ~= "playing" then
+                        say("Resume failed: " .. tostring(s.status) .. ". Cannot continue.")
+                        return
+                    end
+                else
+                    local lineup = {}
+                    for k, v in pairs(run.lineup or {}) do lineup[tostring(k)] = v end
+                    saved = { slot = tonumber(run.slotKey), lineup = lineup, spot = run.playerSpot }
+                    local stage = tonumber(run.stage) or 1
+                    local team = GauntletData.teams[stage]
+                    local name = team and team.name
+                    local b = call("gauntlet", "start", name)
+                    if b.status ~= "ok" and not run.inMatch then
+                        say("Stage " .. stage .. ": failed to start (" .. tostring(b.status) .. "). Retrying in 4s...")
+                        if not hold(job, 4) then break end
+                    else
+                        say(("Stage %d (Match %d/%d vs %s | Coins: +%d)"):format(stage, cfgG.matches or 15, tostring(name), coins() - startCoins))
+                        if not hold(job, (cfgG.minSeconds or 30) + 1) then break end
+                        local r = report(job, "gauntlet", 2, 0, 8.4, name, cfgG.firstTo or 3, 0)
+                        if r.status == "result" then
+                            matches = matches + 1
+                            say(("Stage %d Match %d WON! (+%d coins)"):format(stage, matches, coins() - startCoins))
+                        elseif r.status == "cleared" then
+                            matches, clears = matches + 1, clears + 1
+                            say(("GAUNTLET CLEARED! (+%s coins | Clears: %d | Total: +%d | Bank: %d)"):format(tostring(r.coins), clears, coins() - startCoins, coins()))
+                        elseif r.status == "eliminated" then
+                            say("Eliminated at stage " .. stage .. ". Resetting run.")
+                        else
+                            say("Stage " .. stage .. ": result status " .. tostring(r.status) .. ". Retrying in 3s...")
+                            if not hold(job, 3) then break end
+                        end
+                    end
+                end
+            end
+            say(("Farm stopped. Matches won: %d | Clears: %d | Total coins: +%d"):format(matches, clears, coins() - startCoins))
+        end)
 
-    selectTab("HOME")
+        section(P, "MISC")
+        toggle(P, "Anti-AFK", "antiAfk")
+        track(LocalPlayer.Idled:Connect(function()
+            if not cfg.antiAfk then return end
+            pcall(function()
+                local vu = game:GetService("VirtualUser")
+                vu:CaptureController()
+                vu:ClickButton2(Vector2.new())
+            end)
+        end))
+        note(P, "Prevents the game from kicking you for being idle for 20 minutes.")
+        
+        section(P, "CLAIM REWARDS")
+        local claimBtn, claimInfo
+        claimBtn = button(P, "CLAIM DAILY + ACHIEVEMENTS", false, function()
+            claimBtn.Text = "CLAIMING..."
+            task.spawn(function()
+                local before = coins()
+                local AS = require(LocalPlayer.PlayerScripts:WaitForChild("AutoSave"):WaitForChild("AutoSave"))
+                local slot = AS.get()
+                local d = call("daily")
+                local a = call("claimAchievements", slot)
+                claimInfo.Text = ("Daily: %s | Achievements: %s | Coins gained: %d"):format(tostring(d.status), tostring(a.status), coins() - before)
+                claimBtn.Text = "CLAIM DAILY + ACHIEVEMENTS"
+            end)
+        end)
+        claimInfo = note(P, "Claim daily and achievement rewards directly via server call.")
+    end
+
+    selectTab("MATCH")
 
     -- INPUT LOOP
     track(UIS.InputBegan:Connect(function(input, gp)
-        if binding then binding(input) return end
         if gp then return end
-        if input.KeyCode == cfg.keyToggleUI then
+        if input.KeyCode == Enum.KeyCode.RightShift then
             win.Visible = not win.Visible
-        elseif input.KeyCode == cfg.keyTake then
+        elseif input.KeyCode == Enum.KeyCode.G then
             takeBall()
-        elseif input.KeyCode == cfg.keyScore then
+        elseif input.KeyCode == Enum.KeyCode.H then
             scoreNow()
         end
     end))
@@ -918,19 +1118,34 @@ return (function(...)
         if live and cfg.infStamina then
             local found = next(state.staminas) ~= nil
             if (state.newSim or not found) and os.clock() >= nextScan then
-                state.newSim = false nextScan = os.clock() + 3 findStaminas()
+                state.newSim = false
+                nextScan = os.clock() + 3
+                findStaminas()
             end
-            for t in pairs(state.staminas) do t.value = t.max end
+            for t in pairs(state.staminas) do
+                t.value = t.max
+            end
         end
     end))
 
     function state.unload()
+        if state.restoreSkip then pcall(state.restoreSkip) end
+        if state.infJob then state.infJob.stop = true end
+        if state.gauJob then state.gauJob.stop = true end
         state.alive = false
-        for cls, orig in pairs(state.patched) do for k, fn in pairs(orig) do cls[k] = fn end end
+        for cls, orig in pairs(state.patched) do
+            for k, fn in pairs(orig) do
+                cls[k] = fn
+            end
+        end
         state.patched = {}
-        for t, origSpend in pairs(state.staminas) do t.spend = origSpend end
+        for t, origSpend in pairs(state.staminas) do
+            t.spend = origSpend
+        end
         state.staminas = {}
-        for _, c in ipairs(state.conns) do pcall(function() c:Disconnect() end) end
+        for _, c in ipairs(state.conns) do
+            pcall(function() c:Disconnect() end)
+        end
         state.conns = {}
         if state.gui then state.gui:Destroy() end
         if _G.BLBall == state then _G.BLBall = nil end
